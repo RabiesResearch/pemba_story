@@ -1,14 +1,12 @@
 {
-	"title": "Title Case Hed Goes Here",
-	"description": "Sentence case dek goes down here. Modify these in data/meta.json.",
+	"title": "Pemba Public Engagement",
+	"description": "Working on telling the story of rabies elimination on Pemba.",
 	"site": "https://site.com",
 	"siteName": "",
 	"url": "https://site.com/year/month/name/",
 	"keywords": "tk",
-	"imgFacebook": "https://site.com/year/month/name/assets/social/social-facebook.jpg",
-	"imgTwitter": "https://site.com/year/month/name/assets/social/social-twitter.jpg",
 	"author": {
-		"name": "",
+		"name": "Rabid Bites Team",
 		"url": "https://site.com/author/the-pudding-team",
 		"twitterHandle": ""
 	},
