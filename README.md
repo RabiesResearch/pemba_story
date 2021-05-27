@@ -16,6 +16,8 @@ After cloning the repo run `npm start` to fire up the project server. `control +
 
 Any changes to the `src/` folder will trigger live reload.
 
+In general, the only bits you want to edit manually are in `src/` & `data/`.
+
 ### HTML
 
 **Where it goes:** `src/html/partials/story/`.
@@ -85,7 +87,7 @@ To use these, at the top of your `.js` file, include
 
 If there is only one exported function, you can use it in your file with just `functionName()`. Otherwise, you'll need `functionName.specificFunction()`.
 
-## CSS
+### CSS
 
 **Where it goes:** `src/css/story/`.
 
