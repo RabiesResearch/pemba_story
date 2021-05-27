@@ -8,3 +8,4 @@ dev
 dist
 .Rproj.user
 rmd_draft/working.html
+.Rhistory
