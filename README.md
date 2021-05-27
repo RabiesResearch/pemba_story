@@ -115,7 +115,7 @@ This generates a single html file with inlined css, a single js file, and a fold
 
 ### Github Pages
 
-Run `make github` (make sure you've enabled github pages in your repo settings to pull from `docs`).
+Run `make github` (make sure you've enabled github pages in your repo settings to pull from `docs`). This will also knit the [Rmd draft](https://rabiesresearch.github.io/pemba_story/index_rmd.html).
 
 ### Rmarkdown
 
