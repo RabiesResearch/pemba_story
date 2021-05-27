@@ -1,6 +1,6 @@
 # Telling the story of rabies elimination on Pemba Island
 
-Scott Pen Award Project
+Scott Pen Award Project  
 
 working draft js: [https://rabiesresearch.github.io/pemba_story/](https://rabiesresearch.github.io/pemba_story/)  
 
