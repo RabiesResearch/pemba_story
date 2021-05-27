@@ -1,0 +1,36 @@
+---
+title: "Drafting Pemba Story"
+author: "Malavika Rajeev"
+date: "5/26/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(here) # wrap all paths in here() so that file paths stay relative to project root
+library(rchie) # requires system dependency V8!
+
+# set up our google doc copy
+library(googledrive)
+library(googlesheets4)
+googlesheets4::gs4_deauth() # for knitting without having to reauthorize (otherwise will hang!)
+gdata <- from_aml(as_id("1NZQ27a-3-CEMkO6rpZfNhO_tvEVSbZWTOah-nsq-mTs"))
+head(gdata)
+```
+
+You can include text this way:
+
+`r gdata$rabies_primer$lede`
+
+Format this way or can directly do markdown formatting in the google doc.  
+
+`r paste("###", gdata$pemba$lede)`
+
+Or this way:
+
+```{r asis, results='asis'}
+
+cat(paste(gdata$tracing_case_rabid, sep = "\n"), sep = '\n\n')
+
+```
+
