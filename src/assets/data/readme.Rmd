@@ -1,0 +1,35 @@
+---
+output: github_document
+---
+
+<!-- readme.md is generated from README.Rmd. Please edit that file -->
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(readr)
+library(dplyr)
+library(here)
+case_dt <- read_csv(here("src/assets/data/rabies_cases_anonymized.csv"))
+```
+
+## Rabies data from Pemba
+
+[rabies_cases_anonymized.csv](src/assets/data/rabes_cases_anonymized.csv) are `r nrow(case_dt)` suspected rabid animal cases on Pemba Island, Tanzania between `r min(case_dt$date_symptoms)` - `r max(case_dt$date_symptoms)`. The case-infector links have been reconstructed using methods described in 
+[Hampson et al. 2009](https://journals.plos.org/plosbiology/article?id=10.1371/journal.pbio.1000053).
+
+### Metadata for columns
+```{r}
+knitr::kable(
+  data.frame(
+    Column = names(case_dt), 
+    Description = c("The unique id of the case.", 
+                    "The unique id of the infector identified through a combination of contact tracing and transmission tree reconstruction.", 
+                    "The unique id of the infector for a subset of animals for which contact tracing data is available.", 
+                    "The transmission chain to which each case belongs to.", 
+                    "The x-coordinate location (in UTM coordinates) randomly jittered by 500 - 1000 meters to preserve anonymity.", 
+                    "The y-coordinate location (in UTM coordinates) randomly jittered by 500 - 1000 meters to preserve anonymity.", 
+                    "The species of animal.", 
+                    "The date at which the animal began showing symptoms.")))
+```
+
+As case locations have been anonymized, original distances between case pairs are provided at [dist_between_cases.csv](src/assets/data/dist_between_cases.csv). The columns `id_1` and `id_2` correspond to the column `id_case` in `rabies_cases_anonymized.csv`, and `dist_m` is the distance in meters between the two cases. 
