@@ -9,6 +9,10 @@ output: html_document
 knitr::opts_chunk$set(echo = FALSE)
 library(here) # wrap all paths in here() so that file paths stay relative to project root
 library(rchie) # requires system dependency V8!
+library(visNetwork)
+library(networkD3)
+library(treerabid)
+library(readr)
 
 # set up our google doc copy
 library(googledrive)
@@ -18,19 +22,49 @@ gdata <- from_aml(as_id("1NZQ27a-3-CEMkO6rpZfNhO_tvEVSbZWTOah-nsq-mTs"))
 head(gdata)
 ```
 
-You can include text this way:
+## Static + interactive figures for Pemba story w/out copy or transitions
 
-`r gdata$rabies_primer$lede`
+```{r data}
+rabies_dt <- read_csv(here("src/assets/data/rabies_cases_anonymized.csv"))
+library(igraph)
+library(dplyr)
 
-Format this way or can directly do markdown formatting in the google doc.  
+edge_list <- 
+  filter(rabies_dt, !is.na(id_progen_tree)) %>% 
+  select(from = id_progen_tree, to = id_case)
+node_list <- 
+  select(rabies_dt, id = id_case, date_symptoms, membership, 
+         utm_easting, utm_northing)
+gr <- graph_from_data_frame(d = edge_list, vertices = node_list)
+V(gr)$color <- colorRampPalette()
 
-`r paste("###", gdata$pemba$lede)`
+visIgraph(gr) %>%
+  visIgraphLayout("layout_with_sugiyama")
+visIgraph(gr) %>%
+  visIgraphLayout("layout_with_kk")
 
-Or this way:
+?rabies_dt$id_d3 <- as.numeric(factor(rabies_dt$id_case)) - 1
+rabies_dt_d3 <-
+  rabies_dt %>% 
+  left_join(select(rabies_dt, id_progen_tree = id_case, id_d3_progen = id_d3))
 
-```{r asis, results='asis'}
+edges_d3  <-
+  filter(rabies_dt_d3, !is.na(id_d3_progen)) %>% 
+  select(from = id_d3_progen, to = id_d3) %>%
+  mutate(val = 1)
+nodes_d3 <- 
+  select(rabies_dt_d3, id = id_d3, date_symptoms, membership, 
+         utm_easting, utm_northing) %>%
+  arrange(id) %>%
+  mutate(val  = 1, membership = factor(membership))
 
-cat(paste(gdata$tracing_case_rabid, sep = "\n"), sep = '\n\n')
+forceNetwork(Links = slice(edges_d3, 1), Nodes = nodes_d3, 
+             Source = "to", Target = "from", 
+             NodeID = "id", Group = "membership", 
+             Value = "val",
+             opacity = 1, zoom = TRUE, charge=-0.1, legend = TRUE, 
+             linkColour = "white")
 
 ```
+
 
