@@ -1,5 +1,5 @@
 ---
-title: "Drafting Pemba Story"
+title: "Tracking a deadly infectious disease: the case of canine rabies on Pemba Island"
 author: "Malavika Rajeev"
 date: "5/26/2021"
 output: html_document
@@ -19,52 +19,74 @@ library(googledrive)
 library(googlesheets4)
 googlesheets4::gs4_deauth() # for knitting without having to reauthorize (otherwise will hang!)
 gdata <- from_aml(as_id("1NZQ27a-3-CEMkO6rpZfNhO_tvEVSbZWTOah-nsq-mTs"))
-head(gdata)
-```
 
-## Static + interactive figures for Pemba story w/out copy or transitions
-
-```{r data}
-rabies_dt <- read_csv(here("src/assets/data/rabies_cases_anonymized.csv"))
-library(igraph)
-library(dplyr)
-
-edge_list <- 
-  filter(rabies_dt, !is.na(id_progen_tree)) %>% 
-  select(from = id_progen_tree, to = id_case)
-node_list <- 
-  select(rabies_dt, id = id_case, date_symptoms, membership, 
-         utm_easting, utm_northing)
-gr <- graph_from_data_frame(d = edge_list, vertices = node_list)
-V(gr)$color <- colorRampPalette()
-
-visIgraph(gr) %>%
-  visIgraphLayout("layout_with_sugiyama")
-visIgraph(gr) %>%
-  visIgraphLayout("layout_with_kk")
-
-?rabies_dt$id_d3 <- as.numeric(factor(rabies_dt$id_case)) - 1
-rabies_dt_d3 <-
-  rabies_dt %>% 
-  left_join(select(rabies_dt, id_progen_tree = id_case, id_d3_progen = id_d3))
-
-edges_d3  <-
-  filter(rabies_dt_d3, !is.na(id_d3_progen)) %>% 
-  select(from = id_d3_progen, to = id_d3) %>%
-  mutate(val = 1)
-nodes_d3 <- 
-  select(rabies_dt_d3, id = id_d3, date_symptoms, membership, 
-         utm_easting, utm_northing) %>%
-  arrange(id) %>%
-  mutate(val  = 1, membership = factor(membership))
-
-forceNetwork(Links = slice(edges_d3, 1), Nodes = nodes_d3, 
-             Source = "to", Target = "from", 
-             NodeID = "id", Group = "membership", 
-             Value = "val",
-             opacity = 1, zoom = TRUE, charge=-0.1, legend = TRUE, 
-             linkColour = "white")
+# pemba data
+pemba_dt <- read_csv(here("src/assets/data/rabies_cases_anonymized.csv"))
 
 ```
+
+`r gdata$rabies_primer$lede`
+
+`r gdata$rabies_primer$pepvax`
+
+[photos of pep vax or pep vax poster]
+
+`r gdata$rabies_primer$dogvax`
+
+[photos of dog vax | map of countries that have elim/close to elim/endemic]
+
+`r gdata$rabies_primer$elimination`
+
+[links to zeroby30 etc.]
+
+`r gdata$pemba$lede`
+
+[map of Pemba]
+
+`r gdata$pemba$story`
+
+`r gdata$pemba$background`
+
+`r gdata$pemba$tracing_lede`
+
+`r gdata$tracing_case_rabid$step1`
+
+[follow Kennedy's travel path]
+
+`r gdata$tracing_case_rabid$step2`
+
+[zoom in to location of a clinic]
+
+`r gdata$tracing_case_rabid$step3`
+
+[zoom in to Selem & show the four dogs Killa, Polisi, Hatari, Simba]
+
+`r gdata$tracing_case_rabid$transitionCT`
+
+[show the network of transmission with four dogs]
+
+`r gdata$tracing_case_rabid$step4`
+
+[add in the human exposures]
+
+`r gdata$tracing_case_rabid$normal`
+
+[link to how to avoid animal bites]
+
+`r gdata$tracing_case_rabid$sample`
+
+[video with gore warning]
+
+`r gdata$tracing_case_rabid$sequence`
+
+[add in visualisation of sequences alongside tree]
+
+`r gdata$tracing_segway`
+
+[circle pack showing all cases traced, probable rabies cases, confirmed, and sequenced,
+& also link each circle to stories here]
+
+
+
 
 
