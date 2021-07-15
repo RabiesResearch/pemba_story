@@ -29,8 +29,6 @@ pemba_dt <- read_csv(here("src/assets/data/rabies_cases_anonymized.csv"))
 
 `r gdata$rabies_primer$pepvax`
 
-<iframe width="100%" height="300" src="//jsfiddle.net/LaurieLBaker/dq38pbm6/20/embedded/" allowfullscreen="allowfullscreen" allowpaymentrequest frameborder="0"></iframe>
-
 [photos of pep vax or pep vax poster]
 
 `r gdata$rabies_primer$dogvax`
