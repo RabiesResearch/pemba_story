@@ -25,11 +25,12 @@ knitr::kable(
     Description = c("The unique id of the case.", 
                     "The unique id of the infector identified through a combination of contact tracing and transmission tree reconstruction.", 
                     "The unique id of the infector for a subset of animals for which contact tracing data is available.", 
-                    "The transmission chain to which each case belongs to.", 
+                    "The phylogenetic lineage which the case belongs to identified through transmission tree reconstruction. All cases will have a non-zero value.", 
+                    "The phylogenetic lineage assigned to a sampled case, if zero that means this case was unsampled.", 
                     "The x-coordinate location (in UTM coordinates) randomly jittered by 500 - 1000 meters to preserve anonymity.", 
                     "The y-coordinate location (in UTM coordinates) randomly jittered by 500 - 1000 meters to preserve anonymity.", 
                     "The species of animal.", 
                     "The date at which the animal began showing symptoms.")))
 ```
 
-As case locations have been anonymized, original distances between case pairs are provided at [dist_between_cases.csv](src/assets/data/dist_between_cases.csv). The columns `id_1` and `id_2` correspond to the column `id_case` in `rabies_cases_anonymized.csv`, and `dist_m` is the distance in meters between the two cases. 
+All case locations have been anonymized spatially. Please contact the Rabies Research team to request access to the non-anoymized coordinates.
