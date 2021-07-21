@@ -1,0 +1,312 @@
+---
+title: ""
+author: ""
+date: ""
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(data.table)
+library(ggplot2)
+library(sf)
+library(cowplot)
+library(patchwork)
+library(ggtext)
+library(tidyverse)
+library(lubridate)
+library(scales)
+library(grid)
+library(gridtext)
+library(magrittr)
+library(showtext)
+library(here)
+library(stringr)
+```
+
+```{r}
+# Pull in data
+
+case_dt <- read_csv(here("src/assets/data/rabies_cases_anonymized.csv"))
+vax_campaigns <- read_csv(here("src/assets/data/vax_campaigns.csv"))
+case_dt %>%
+  mutate(month = floor_date(date_symptoms, unit = "month")) %>%
+  group_by(month) %>%
+  summarise(ncases = n()) -> case_ts
+
+key_dates <- 
+  tribble(
+    ~name, ~date, 
+    "first_campaign", 
+    vax_campaigns %>% filter(year(dmy(vacc_date)) < 2015) %$% min(dmy(vacc_date)), 
+    "gates_last_detected", 
+    filter(case_ts, year(month) < 2016) %$% max(month), 
+    "gates_last_campaign", 
+    vax_campaigns %>% filter(year(dmy(vacc_date)) < 2015) %$% max(dmy(vacc_date)), 
+    "second_outbreak", 
+    filter(case_ts, year(month) > 2015) %$% min(month),
+    "second_campaign_start", 
+    vax_campaigns %>% filter(year(dmy(vacc_date)) > 2015) %$% min(dmy(vacc_date)),
+    "second_last_detected", 
+    filter(case_ts, year(month) > 2016) %$% max(month)
+    )
+```
+
+
+```{r}
+
+# Pull in annotations and other text from google doc
+library(googledrive)
+library(rchie)
+txt <- from_aml(as_id("14kgSTNmxxXGkub7trVS5w_Ab4oGSRSM2tyMJoyRKP7U"))
+
+annots <- 
+  rbindlist(lapply(txt[grep("annotation", names(txt))], data.frame), 
+                    fill = TRUE) %>%
+  left_join(key_dates) %>%
+  mutate(month = floor_date(date, unit = "month")) %>%
+  left_join(case_ts) %>%
+  tidyr::replace_na(list(ncases = 0)) %>%
+  arrange(month) %>%
+  mutate(x_text = as.numeric(month), 
+         x_from = as.numeric(month), 
+         y_text = 9, 
+         y_from = ncases, 
+         hjust = 1, 
+         vjust = c(0.5, 0.25, 0, 1, 0.5),  
+         text = en, 
+         width = 25)
+
+```
+
+
+```{r}
+## Get the vaccination coverage monthly & convert it to a grob
+cov_pemba <- read.csv(here("src/assets/data/vax_cov.csv"), header = FALSE)
+cov_pemba$date <-seq.Date(from = ymd("2011-01-01"), to = ymd("2020-12-01"), 
+                          by = "month")
+cov_pemba <- bind_rows(cov_pemba, 
+                       data.frame(date = seq.Date(from = ymd("2010-02-01"), 
+                                           to = ymd("2010-12-01"), 
+                                           by = "month"), 
+                                  V1 = 0))
+
+cov_pemba %>%
+  filter(date <= "2020-02-01") %>%
+  arrange(date) %$%
+  as.data.frame(approx(date, V1, n = 50000)) -> cov_interpolated
+grad <- colorRampPalette(blues9)
+
+tibble(cov_join = as.character(seq(0, 1, by = 0.0001))) %>%
+  mutate(col = grad(n())) %>%
+  right_join(mutate(cov_interpolated, cov_join = as.character(round(y, 4)))) %>%
+  arrange(x) -> cov_interpolated
+cols <- cov_interpolated %>% group_by(cov_join, col) %>% summarize(n = n())
+
+leg_dt <- data.frame(cov = seq(0, 1, by = 0.001), x = 1)
+leg_plt <-
+  ggplot(leg_dt) +
+  geom_tile(aes(x = x, y = cov, fill = cov)) +
+  scale_fill_distiller(direction = 1, name = str_wrap(txt$label_vax_legend$en, 10), 
+                       breaks = c(0, 0.25, 0.50, 0.75, 1.0), 
+                       labels = c(0, 25, 50, 75, 100)) +
+  theme(legend.position = "bottom", text = element_text(size = 10))
+cov_leg <- as_grob(cowplot::get_legend(leg_plt))
+
+g <- rasterGrob(cov_interpolated$col, 
+                width=unit(1,"npc"), 
+                height=unit(1,"npc"))
+```
+
+
+# Tracking the elimination of canine rabies from Pemba Island, Tanzania {.tabset}
+
+## English
+```{r english, fig.showtext=TRUE, fig.height = 11.75, fig.width = 8.25, out.width = "150%"}
+# Option 1: with coverage as background
+
+font_add_google("Alegreya", "alegreya")
+showtext_auto()
+
+# Main text to accompany plot
+text_title <- textbox_grob(txt$title$en,
+  gp = gpar(fontsize=14,family="alegreya", fontface = "bold"))
+text_main <- textbox_grob(txt$main$en,
+  gp = gpar(fontsize=11.5, family="alegreya", fontface = "italic"))
+text_policy_hed <- textbox_grob(txt$policy_hed$en,
+  gp = gpar(fontsize = 11.5, family="alegreya", fontface = "bold"))
+text_policy <- textbox_grob(paste(txt$policy_text[grep("en", 
+                                                       names(txt$policy_text))], 
+                                  collapse = "<br><br>"),
+                            gp = gpar(fontsize=10, family = "alegreya"))
+
+# deal with at sign in contact
+text_contact <- textGrob(str_wrap(txt$contact$en, width = 45),
+                         just = "left",
+                         gp = gpar(fontsize = 10, family = "alegreya", 
+                                   fontface = "italic"))
+
+# date breaks & labs
+date_breaks <- c("2010-01-01", "2012-01-01", "2014-01-01", 
+                                "2016-01-01", "2018-01-01", "2020-01-01")
+
+# The actual policy brief
+case_ts %>%
+  ggplot() +
+  annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) + 
+  geom_col(aes(x = as.numeric(month), y = ncases), color = "grey50", 
+           fill = "black") +
+  ggtext::geom_textbox(data = annots, 
+                       aes(x = x_text, y = y_text, label = text, 
+                           hjust = hjust, vjust = vjust),
+                       box.colour = NA, # remove background and outline
+                       width = unit(0.5, "npc"), 
+                       size = 3) +
+  geom_segment(data = annots, 
+               aes(x = x_from, xend = x_text, y = y_from, yend = y_text)) +
+  geom_point(data = annots, 
+               aes(x = x_from, y = y_from), shape = 108, stroke = 1.5) +
+  expand_limits(y = 20, x = c(as.numeric(ymd(c("2009-12-01"))), 
+                              as.numeric(ymd(c("2020-01-01"))))) +
+  scale_x_reverse(position = "top", name = "", 
+                  breaks = as.numeric(ymd(date_breaks)),
+                  labels = format(ymd(date_breaks), "%Y")) +
+  scale_y_reverse(position = "left", name = txt$label_animal_cases$en, 
+                  breaks = c(0, 5, 10, 15)) +
+  theme(plot.margin = unit(c(10, 20 , 2, 0), "lines")) +
+  annotation_custom(grob = text_title, xmin = -as.numeric(ymd("2007-09-01")), 
+                    xmax = -as.numeric(ymd("2007-09-01")), 
+                    ymin = -18, ymax = 20) +
+  annotation_custom(grob = text_main, xmin = -as.numeric(ymd("2008-07-01")), 
+                    xmax = -as.numeric(ymd("2008-07-01")), 
+                    ymin = -18, ymax = 20) +
+  annotation_custom(grob = text_policy_hed, xmin = -as.numeric(ymd("2009-04-01")), 
+                    xmax = -as.numeric(ymd("2009-04-01")), 
+                    ymin = 5, ymax = 25)  +
+  annotation_custom(grob = text_policy, xmin = -as.numeric(ymd("2014-12-01")), 
+                    xmax = -as.numeric(ymd("2014-12-01")), 
+                    ymin = 5, ymax = 26) +
+  annotation_custom(grob = text_contact, xmin = -as.numeric(ymd("2020-09-01")), 
+                    xmax = -as.numeric(ymd("2020-09-01")), 
+                    ymin = 5, ymax = 5) +
+  annotation_custom(grob = cov_leg, xmin = -as.numeric(ymd("2009-12-01")), 
+                    xmax = -as.numeric(ymd("2009-12-01")), 
+                    ymin = -13, ymax = -13) +
+  coord_flip(clip = "off") -> p_en
+
+p_en
+
+ggsave(here("docs/policy_brief_english.pdf"), p_en, height = 11.75, width = 8.25) # A4 dimensions for printing
+```
+
+
+## Kiswahili
+```{r swahili, fig.showtext=TRUE, fig.height = 12, fig.width = 9, out.width = "150%"}
+# update annotations
+annots <- 
+  rbindlist(lapply(txt[grep("annotation", names(txt))], data.frame), 
+                    fill = TRUE) %>%
+  left_join(key_dates) %>%
+  mutate(month = floor_date(date, unit = "month")) %>%
+  left_join(case_ts) %>%
+  tidyr::replace_na(list(ncases = 0)) %>%
+  arrange(month) %>%
+  mutate(x_text = as.numeric(month), 
+         x_from = as.numeric(month), 
+         y_text = 9, 
+         y_from = ncases, 
+         hjust = 1, 
+         vjust = c(0.5, 0.25, 0, 1, 0.5),  
+         text = ks, 
+         width = 25)
+
+# update legend grob with swahili
+leg_plt_ks <-
+  ggplot(leg_dt) +
+  geom_tile(aes(x = x, y = cov, fill = cov)) +
+  scale_fill_distiller(direction = 1, name = str_wrap(txt$label_vax_legend$ks, 10), 
+                       breaks = c(0, 0.25, 0.50, 0.75, 1.0), 
+                       labels = c(0, 25, 50, 75, 100)) +
+  theme(legend.position = "bottom", text = element_text(size = 10))
+
+cov_leg <- as_grob(cowplot::get_legend(leg_plt_ks))
+
+# Main text to accompany plot
+text_title <- textbox_grob(txt$title$ks,
+  gp = gpar(fontsize = 14,family="alegreya", fontface = "bold"))
+text_main <- textbox_grob(txt$main$ks,
+  gp = gpar(fontsize=11.5, family="alegreya", fontface = "italic"))
+text_policy_hed <- textbox_grob(txt$policy_hed$ks,
+  gp = gpar(fontsize = 12, family="alegreya", fontface = "bold"))
+text_policy <- textbox_grob(paste(txt$policy_text[grep("ks", 
+                                                       names(txt$policy_text))], 
+                                  collapse = "<br><br>"),
+                            gp = gpar(fontsize=10, family = "alegreya"))
+
+# deal with at sign in contact
+text_contact <- textGrob(str_wrap(txt$contact$ks, width = 45),
+                         just = "left",
+                         gp = gpar(fontsize = 10, family = "alegreya", 
+                                   fontface = "italic"))
+
+# date breaks & labs
+date_breaks <- c("2010-01-01", "2012-01-01", "2014-01-01", 
+                                "2016-01-01", "2018-01-01", "2020-01-01")
+
+# The actual policy brief
+case_ts %>%
+  ggplot() +
+  annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) + 
+  geom_col(aes(x = as.numeric(month), y = ncases), color = "grey50", 
+           fill = "black") +
+  ggtext::geom_textbox(data = annots, 
+                       aes(x = x_text, y = y_text, label = text, 
+                           hjust = hjust, vjust = vjust),
+                       box.colour = NA, # remove background and outline
+                       width = unit(0.5, "npc"), 
+                       size = 3) +
+  geom_segment(data = annots, 
+               aes(x = x_from, xend = x_text, y = y_from, yend = y_text)) +
+  geom_point(data = annots, 
+               aes(x = x_from, y = y_from), shape = 108, stroke = 1.5) +
+  expand_limits(y = 20, x = c(as.numeric(ymd(c("2009-12-01"))), 
+                              as.numeric(ymd(c("2020-01-01"))))) +
+  scale_x_reverse(position = "top", name = "", 
+                  breaks = as.numeric(ymd(date_breaks)),
+                  labels = format(ymd(date_breaks), "%Y")) +
+  scale_y_reverse(position = "left", name = txt$label_animal_cases$ks, 
+                  breaks = c(0, 5, 10, 15)) +
+  theme(plot.margin = unit(c(10, 24 , 2, 0), "lines")) +
+  annotation_custom(grob = text_title, xmin = -as.numeric(ymd("2007-09-01")), 
+                    xmax = -as.numeric(ymd("2007-09-01")), 
+                    ymin = -18, ymax = 20) +
+  annotation_custom(grob = text_main, xmin = -as.numeric(ymd("2008-06-01")), 
+                    xmax = -as.numeric(ymd("2008-06-01")), 
+                    ymin = -18, ymax = 22) +
+  annotation_custom(grob = text_policy_hed, xmin = -as.numeric(ymd("2009-04-01")), 
+                    xmax = -as.numeric(ymd("2009-04-01")), 
+                    ymin = 3.5, ymax = 25)  +
+  annotation_custom(grob = text_policy, xmin = -as.numeric(ymd("2009-09-01")), 
+                    xmax = -as.numeric(ymd("2020-05-01")), 
+                    ymin = 3.5, ymax = 29) +
+  annotation_custom(grob = text_contact, xmin = -as.numeric(ymd("2020-10-01")), 
+                    xmax = -as.numeric(ymd("2020-10-01")), 
+                    ymin = 3.5, ymax = 3.5) +
+  annotation_custom(grob = cov_leg, xmin = -as.numeric(ymd("2009-12-01")), 
+                    xmax = -as.numeric(ymd("2009-12-01")), 
+                    ymin = -13, ymax = -13) +
+  coord_flip(clip = "off") -> p_ks
+
+p_ks
+
+ggsave(here("docs/policy_brief_kiswahili.pdf"), p_ks, height = 12, width = 9) # had to make this a bit wider 
+```
+
+
+```{r}
+# Push the policy brief to google drive
+googledrive::drive_put(here("docs/policy_brief_english.pdf"), path = "pembaPE/")
+googledrive::drive_put(here("docs/policy_brief_kiswahili.pdf"), path = "pembaPE/")
+```
+

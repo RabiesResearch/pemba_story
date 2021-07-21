@@ -6,6 +6,8 @@ working draft js: [https://rabiesresearch.github.io/pemba_story/](https://rabies
 
 working draft rmd: [https://rabiesresearch.github.io/pemba_story/index_rmd.html](https://rabiesresearch.github.io/pemba_story/index_rmd.html)
 
+data at: [src/assets/data/](src/assets/data/)
+
 ## Workflow
 
 This repository was set up using [the pudding's starter repo](https://github.com/the-pudding/starter) with a few modifications to deal with recent updates to node (see [this commit](https://github.com/RabiesResearch/pemba_story/commit/3f1c52239f54a780365c79f5675c904f3e392e3f#diff-bfb4e5827737b96cacc22269cd7d9b4c9076ac3094e98cbcef9075a018854bec) for bug fix which we might run into again).
