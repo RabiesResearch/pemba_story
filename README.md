@@ -2,7 +2,7 @@
 
 Scott Pen Award Project  
 
-policy brief at: https://rabiesresearch.github.io/pemba_story/policy_brief.html(https://rabiesresearch.github.io/pemba_story/policy_brief.html)
+policy brief at: [https://rabiesresearch.github.io/pemba_story/policy_brief.html](https://rabiesresearch.github.io/pemba_story/policy_brief.html)
 
 working draft js: [https://rabiesresearch.github.io/pemba_story/](https://rabiesresearch.github.io/pemba_story/)  
 
