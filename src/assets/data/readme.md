@@ -3,7 +3,7 @@
 
 ## Rabies data from Pemba
 
-[rabies\_cases\_anonymized.csv](src/assets/data/rabies_cases_anonymized.csv)
+[rabies\_cases\_anonymized.csv](rabies_cases_anonymized.csv)
 are 202 suspected rabid animal cases on Pemba Island, Tanzania between
 2010-01-05 - 2018-10-27. The case-infector links have been reconstructed
 using methods described in [Hampson et
